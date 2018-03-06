@@ -5,9 +5,9 @@ for(var i=0; i<l.length; i++) {
   var states = window.open(l[i].href);
   var m = states.document.links;
   for(var j=0; j<m.length; j++) {
-    var listMovies = window.open(m[j].href);
+    var listMoviesToday = window.open(m[j].href);
     var dayOfWeek = today.getDay();
-    //We need to add 1 to day of week to get Tomorrow's date, since we won't be searching for movie prices for today's date
+    //Need to add 1 to day of week to get Tomorrow's date, since we won't be searching for movie prices for today's date
     dayOfWeek=dayOfWeek+1;
     //DIFF serves to give the second date to check movie prices for the second date. If Tomorrow's Day of week is Weekend, then the second date will be a weekday.
     var diff = 6-dayOfWeek;
@@ -15,20 +15,34 @@ for(var i=0; i<l.length; i++) {
     if (diff <= 0) {
       diff = 2;
     }
+    var theaterdates = listMoviesToday.document.getElementsByClassName('date-picker__link');
+    var twoDates = [];
+    try {
+      twoDates = [theaterdates[1]];
+    }
+    catch(error) {
+      //There weren't enough dates available on Fandango at this theater
+    }
+    try {
+      twoDates.push(theaterdates[1+diff]);
+    }
+    catch(error) {
+      //Second date is missing, but should still be ok
+    }
+    for (var t=0; t < twoDates.length; t++) {
+      var listMovies = window.open(twoDates[t].href);
+      var n = listMovies.document.getElementsByClassName('btn showtime-btn showtime-btn--available');
+      for (var k=0; k<n.length; k++) {
+        var order = window.open(n[k].document.href);
+        var o = order.document.getElementsByClassName("qtyDropDown");
+        var boolDropDown=true;
+        if (o.length == 0) {
+          o = order.document.getElementsByClassName("input_txt");
+          boolDropDown=false;
+        }
+        for (var ii=0; ii < o.length; ii++) {
 
-
-    var listMovies = window.
-    var n = listMovies.document.getElementsByClassName('btn showtime-btn showtime-btn--available');
-    for (var k=0; k<n.length; k++) {
-      var order = window.open(n[k].document.href);
-      var o = order.document.getElementsByClassName("qtyDropDown");
-      var boolDropDown=true;
-      if (o.length == 0) {
-        o = order.document.getElementsByClassName("input_txt");
-        boolDropDown=false;
-      }
-      for (var ii=0; ii < o.length; ii++) {
-
+        }
       }
     }
   }
