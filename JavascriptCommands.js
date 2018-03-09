@@ -2,6 +2,7 @@ window.location.href = 'https://www.fandango.com/site-index/movietheaters.html';
 stateLinks = document.links;
 var today = new Date();
 for(var i=0; i<stateLinks.length; i++) {
+  console.log("Opening " + stateLinks[i].text);
   openStateTheaters(stateLinks[i],today);
 }
 
@@ -11,13 +12,14 @@ function openStateTheaters(stateLink, today) {
   statei.addEventListener("load", function(event) {
     theaterLinks=statei.document.links;
     for (var j = 0; j < statei.length; j++) {
+      console.log("Opening " + theaterLinks[j].text);
       openTheater(theaterLinks[j]);
     }
   });
 }
 
 function openTheater(theaterLink, today) {
-  theateri=window.open(theaterLink.href);
+  theateri=window.open(theaterLink);
   theateri.addEventListener("load", function(event) {
     todayMovieLinks=theateri.document.links;
     var dayOfWeek = today.getDay();
@@ -80,3 +82,12 @@ class ticket {
 }
 
 //"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" -incognito -disable-web-security --user-data-dir
+
+
+a=document.links;
+b=window.open(a[0]);
+b.addEventListener("load", function(event) {
+    console.log("All resources finished loading!");
+    c=b.document.links;
+    d=window.open(c[0]);
+  });
