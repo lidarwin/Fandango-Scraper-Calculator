@@ -3,52 +3,49 @@ stateLinks = document.links;
 var today = new Date();
 for(var i=0; i<stateLinks.length; i++) {
   console.log("Opening " + stateLinks[i].text);
-  openStateTheaters(stateLinks[i],today);
+  statei = window.open(stateLinks[i].href);
+  statei.addEventListener("load", openStateTheaters(statei.document.links));
 }
 
 
-function openStateTheaters(stateLink, today) {
-  statei=window.open(stateLink.href);
-  statei.addEventListener("load", function(event) {
-    theaterLinks=statei.document.links;
-    for (var j = 0; j < statei.length; j++) {
-      console.log("Opening " + theaterLinks[j].text);
-      openTheater(theaterLinks[j]);
-    }
-  });
+function openStateTheaters(theaterLinks, today) {
+  for (var j = 0; j < theaterLinks.length; j++) {
+    console.log("Opening " + theaterLinks[j].text);
+    theateri = window.open(theaterLinks[j]);
+    theateri.addEventListener("load", openTheater(theateri, today));
+  }
 }
 
-function openTheater(theaterLink, today) {
-  theateri=window.open(theaterLink);
-  theateri.addEventListener("load", function(event) {
-    todayMovieLinks=theateri.document.links;
-    var dayOfWeek = today.getDay();
-    //Need to add 1 to day of week to get Tomorrow's date, since we won't be searching for movie prices for today's date
-    dayOfWeek=dayOfWeek+1;
-    //DIFF serves to give the second date to check movie prices for the second date. If Tomorrow's Day of week is Weekend, then the second date will be a weekday.
-    var diff = 6-dayOfWeek;
-    var secondDay;
-    if (diff <= 0) {
-      diff = 2;
-    }
-    var theaterdates = theateri.document.getElementsByClassName('date-picker__link');
-    var twoDates = [];
-    try {
-      twoDates = [theaterdates[1]];
-    }
-    catch(error) {
-      //There weren't enough dates available on Fandango at this theater
-    }
-    try {
-      twoDates.push(theaterdates[1+diff]);
-    }
-    catch(error) {
-      //Second date is missing, but should still be ok
-    }
-    for (var k = 0; k < twoDates.length; k++) {
-      openMoviesOnDay(twoDates[k]);
-    }
-  });
+function openTheater(theateri, today) {
+  todayMovieLinks=theateri.document.links;
+  var dayOfWeek = today.getDay();
+  //Need to add 1 to day of week to get Tomorrow's date, since we won't be searching for movie prices for today's date
+  dayOfWeek=dayOfWeek+1;
+  //DIFF serves to give the second date to check movie prices for the second date. If Tomorrow's Day of week is Weekend, then the second date will be a weekday.
+  var diff = 6-dayOfWeek;
+  var secondDay;
+  if (diff <= 0) {
+    diff = 2;
+  }
+  var theaterdates = theateri.document.getElementsByClassName('date-picker__link');
+  var twoDates = [];
+  try {
+    twoDates = [theaterdates[1]];
+  }
+  catch(error) {
+    //There weren't enough dates available on Fandango at this theater
+  }
+  try {
+    twoDates.push(theaterdates[1+diff]);
+  }
+  catch(error) {
+    //Second date is missing, but should still be ok
+  }
+  for (var k = 0; k < twoDates.length; k++) {
+    dayMoviesPage=window.open(twoDates[k]);
+    dayMoviesPage.addEventListener("load", openMoviesOnDay(dayMoviesPage))
+    openMoviesOnDay(twoDates[k]);
+  }
 }
 
 function openMoviesOnDay(dateLink) {
@@ -59,6 +56,7 @@ function openMoviesOnDay(dateLink) {
       openMovie(dayMoviesList[l]);
     }
   });
+  
 }
 
 function openMovie()
