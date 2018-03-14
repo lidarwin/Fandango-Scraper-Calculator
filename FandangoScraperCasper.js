@@ -3,6 +3,8 @@ var startUrl = 'https://www.fandango.com/site-index/movietheaters.html';
 
 // URL variables
 var visitedUrls = [];
+var stateLinks = [];
+var theaterLinks = [];
 
 //New Date object for today
 var today = new Date();
@@ -23,24 +25,19 @@ if (diff <= 0) {
 //This is the array we will be using. The fandango page has the links for the movie dates using the same indices as below
 var twodates=[1,1+diff];
 
-try {
-  twoDates = [theaterdates[1]];
-}
-catch(error) {
-  //There weren't enough dates available on Fandango at this theater
-}
-try {
-  twoDates.push(theaterdates[1+diff]);
-}
-catch(error) {
-  //Second date is missing, but should still be ok
-}
+//Scope when using casper has some weird behavior, so we have to define the variables here and use while loops
+var boolTest=false;
+var i = 0;
+var j = 0;
+var k = 0;
+var l = 0;
+
 
 // Create instances
 var casper = require('casper').create({
     verbose: true,
-    logleve: "debug"
-});
+    logLevel: 'debug'
+})
 
 
 // Function to get the list of state URL's from the Fandango State links
@@ -56,7 +53,7 @@ function fandangoSpider(url) {
 
 	// Open the URL
 	casper.open(url).then(function() {
-
+        casper.log('this is a debug message', 'debug');
 		// Set the status style based on server status code
 		var status = this.status().currentHTTPStatus;
 		switch(status) {
@@ -69,7 +66,7 @@ function fandangoSpider(url) {
 		this.echo(this.colorizer.format(status, statusStyle) + ' ' + url);
 
 		// Find links present on this page. Still need .HREF to access a link
-		var stateLinks = this.evaluate(function() {
+		stateLinks = this.evaluate(function() {
             var links = document.links;
             var hrefs=[];
             //returning an array of strings that are the HREFS
@@ -79,16 +76,10 @@ function fandangoSpider(url) {
 			return hrefs;
         });
         //Now crawl through all the theaters in USA. So, the counter should only go up to 51!
-        for(var i=0; i < 2; i++) {
-            var boolTest=false;
-            if (i==0) {
-                boolTest = true;
-                this.echo(boolTest);
-                this.echo(stateLinks[0]);
-            }
+        while (i < 2) {
             casper.open(stateLinks[i]).then(function() {
         		// Find links present on this page. Still need .HREF to access a link
-                var theaterLinks = this.evaluate(function() {
+                var tempLinks = this.evaluate(function() {
                     var links = document.links;
                     var hrefs=[];
                     //returning an array of strings that are the HREFS
@@ -97,41 +88,45 @@ function fandangoSpider(url) {
                     }
                     return hrefs;
                 });
-                if (boolTest) {
-                    this.echo(i);
-                }
-                //theaterLinks.forEach(function(e) {
-                for (var j = 0; j < 2; j++) {
-                    casper.open(theaterLinks[j]).then(function() {
-                        //There is a calender with clickable dates for the following week (but many times less than a week)
-                        var theaterdates = this.evaluate(function() {
-                            var hrefs=[];
-                            var temp = document.getElementsByClassName('date-picker__link');
-                            try {
-                                hrefs.push(temp[1].href);
-                            }
-                            catch(error) {
-                                //There weren't enough dates available on Fandango at this theater
-                            }
-                            try {
-                                hrefs.push(temp[1+diff]);
-                            }
-                            catch(error) {
-                                //Second date is missing, but should still be ok
-                            }
-                            //returning an array of strings that are the HREFS
-                            return hrefs;
-                        });
-                    });
-                }
-                //});
+                this.echo(tempLinks.length);
+                theaterLinks.concat(tempLinks);
+                this.echo(theaterLinks.length);
             });
+            i = i + 1;
         }
+        this.echo(theaterLinks.length);
+        //theaterLinks.forEach(function(e) {
+        while (j < 2) {
+            casper.open(theaterLinks[j]).then(function() {
+                //There is a calender with clickable dates for the following week (but many times less than a week)
+                var theaterdates = this.evaluate(function() {
+                    var hrefs=[];
+                    var temp = document.getElementsByClassName('date-picker__link');
+                    try {
+                        hrefs.push(temp[1].href);
+                    }
+                    catch(error) {
+                        //There weren't enough dates available on Fandango at this theater
+                    }
+                    try {
+                        hrefs.push(temp[1+diff]);
+                    }
+                    catch(error) {
+                        //Second date is missing, but should still be ok
+                    }
+                    //returning an array of strings that are the HREFS
+                    return hrefs;
+                });
+                casper.log('The state website ' + stateLinks[i] + ' and the theater site ' + theaterLinks[j] + ' have this many calender wheel dates ' + theaterdates.length, 'debug');
+            });
+            j = j + 1;
+        }
+        //});
 	});
 
 }
 
-// Start spidering
+// Start the Fandango Scraper through Casper
 casper.start(startUrl, function() {
 	fandangoSpider(startUrl);
 });
