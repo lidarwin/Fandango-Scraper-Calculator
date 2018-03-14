@@ -3,7 +3,7 @@ var startUrl = 'https://www.fandango.com/site-index/movietheaters.html';
 
 // URL variables
 var visitedUrls = [];
-var stateLinks = [];
+var stateLabels = [];
 var theaterLinks = [];
 
 //New Date object for today
@@ -31,12 +31,14 @@ var i = 0;
 var j = 0;
 var k = 0;
 var l = 0;
+//Keep track of the number of clicks to keep track of how many times we need to go back
+var numClicks=0;
 
 
 // Create instances
 var casper = require('casper').create({
     verbose: true,
-    logLevel: 'debug'
+    logLevel: 'error'
 })
 
 
@@ -65,18 +67,27 @@ function fandangoSpider(url) {
 		// Display the spidered URL and status
 		this.echo(this.colorizer.format(status, statusStyle) + ' ' + url);
 
-		// Find links present on this page. Still need .HREF to access a link
-		stateLinks = this.evaluate(function() {
+		// Find labels present on this page, these happen to all be clickable URL's
+		stateLabels = this.evaluate(function() {
             var links = document.links;
             var hrefs=[];
             //returning an array of strings that are the HREFS
             for (ll=0; ll < document.links.length; ll++) {
-                hrefs.push(document.links[ll].href);
+                hrefs.push(document.links[ll].text);
             }
 			return hrefs;
         });
+
         //Now crawl through all the theaters in USA. So, the counter should only go up to 51!
         while (i < 2) {
+            //Clicks on an unvisited State link in America. Will work because links that are visited will be selectors of E:visited only
+            this.thenClickLabel(stateLabels[i]).then(function() {
+                
+            });
+
+
+
+
             casper.open(stateLinks[i]).then(function() {
         		// Find links present on this page. Still need .HREF to access a link
                 var tempLinks = this.evaluate(function() {
