@@ -2,16 +2,17 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import datetime
+import re
 
 
 #List of all urls to every theater in America that is on Fandango.com
 theaterLinks=[]
 
     
-def soupLink(url, baseURL=''):
+def soupLink(url, baseURL='', headers={}):
     """ Takes in a URL and proceeds to return a BeautifulSoup HTML parsed object. BASEURL is required when the URL does not have HTTPS://
     """
-    r = requests.get(baseURL + url)
+    r = requests.get(baseURL + url, data={})
     c = r.content
     return BeautifulSoup(c,'html.parser')
 
@@ -40,18 +41,12 @@ else:
     with open('TheaterLinks.txt', "r") as myfile:
         theaterLinks = myfile.readlines()
 
-#Day of week is indexed as Sunday->0, Saturday ->6
-#We only want 1 weekday and 1 weekend; no need to check multiple weekdays
-#From a pricing perspective, Sunday is considered a Weekday
-dayOfWeekToday=datetime.datetime.today().weekday()
-dayOfWeekTomorrow = dayOfWeekToday + 1
-diff = 6-dayOfWeekTomorrow
-if (diff <= 0):
-    diff = 2
 
-#TWODATES is an array for use when we are on the calender wheel on a theater
-#First entry is 1 because that is TOMORROW on the calender wheel
-twoDates = [1, 1+diff]
+#For formatting when doing the requests
+sTomorrow = str(datetime.date.today() + datetime.timedelta(1))
+
+#Since we need a header to make it look like we are visiting on a desktop
+userAgentHeader = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
 itest=0
 #Now go through every Theater in America
@@ -61,9 +56,22 @@ for theaterLink in theaterLinks:
         break;
     #Strip is necessary because there is a /n at the end
     theaterLink=theaterLink.strip()
-    soupTheater = soupLink(theaterLink)
-    soupCarasoul = soupTheater.find_all("section", {"class": "date-picker carousel js-movie-calendar carousel-style-strip"})
-    r = requests.post('http://httpbin.org/post', data = {'key':'value'})
+    #Need to find the code in the theater url. In the textfile, it follows underscore, but underscores become hyphens when going to the url
+    m = re.search('.*_(.*)\/theaterpage', theaterLink)
+    theaterCode = m.group(1)
+    theaterLink = requests.get(theaterLink).url
+    theaterLinkReqMovieTime='https://www.fandango.com/napi/theaterMovieShowtimes/'+theaterCode+'?startDate='+sTomorrow+'&isdesktop=true'
+    theaterLinkReqMovieTimeValue=theaterLink+'?date='+sTomorrow
+    
+    data={'referer':theaterLinkReqMovieTimeValue}
+    headers = {**data, **headers}
+    
+    #For some reason, we need to REQUEST.GET this url with key/value so that our IP will be unlocked or something
+    #r = requests.get('https://www.fandango.com/napi/nearbyTheaters?limit=7&zipCode=99515', data = {'referer':'https://www.fandango.com/regal-dimond-center-9-cinemas-aacwx/theater-page?date=2018-03-16'},headers=headers)
+    rMovieTimes = requests.get(theaterLinkReqMovieTime, data = data)
+    r = requests.get('https://www.fandango.com/napi/nearbyTheaters?limit=7&zipCode=99515', headers = {'User-Agent': 'Chrome/39.0.2171.95', 'referer':'https://www.fandango.com/regal-dimond-center-9-cinemas-aacwx/theater-page?date=2018-03-16'})
+    
+    r = requests.get('https://www.fandango.com/napi/theaterMovieShowtimes/aacwx?startDate=2018-03-16&isdesktop=true', headers = {'referer':'https://www.fandango.com/regal-dimond-center-9-cinemas-aacwx/theater-page?date=2018-03-16','User-Agent': 'Chrome/39.0.2171.95'})
     
     
     
