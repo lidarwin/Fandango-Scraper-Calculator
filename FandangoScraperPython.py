@@ -9,6 +9,9 @@ import re
 #List of all urls to every theater in America that is on Fandango.com
 theaterLinks=[]
 
+#List of all urls to every movie at every movietime sold on Fandango.com
+#This list will get output in text file on the fly, but 
+
     
 def soupLink(url, baseURL='', headers={}):
     """ Takes in a URL and proceeds to return a BeautifulSoup HTML parsed object. BASEURL is required when the URL does not have HTTPS://
@@ -55,44 +58,53 @@ itest=0
 rMovieTimes=False
 rUnlocker=False
 
-#Now go through every Theater in America
-for theaterLink in theaterLinks:
-    itest = itest+1
-    if itest == 2:
-        break;
-    #Strip is necessary because there is a /n at the end
-    theaterLink=theaterLink.strip()
-    #Need to find the code in the theater url. In TheaterLinks.txt, it follows underscore, but underscores become hyphens after the URL redirects
-    m = re.search('.*_(.*)\/theaterpage', theaterLink)
-    theaterCode = m.group(1)
-    theaterLink = requests.get(theaterLink).url
-    theaterSoup = soupLink(theaterLink)
-    theaterLinkReqMovieTime='https://www.fandango.com/napi/theaterMovieShowtimes/'+theaterCode+'?startDate='+sTomorrow+'&isdesktop=true'
-    theaterLinkReqMovieTimeValue=theaterLink+'?date='+sTomorrow
-    
-    data={'referer':theaterLinkReqMovieTimeValue}
-    headers = {**data, **userAgentHeader}
-    
-    #For some reason, we need to REQUEST.GET this url below with key/value so that our IP will be unlocked or something
-    #r = requests.get('https://www.fandango.com/napi/nearbyTheaters?limit=7&zipCode=99515', data = {'referer':'https://www.fandango.com/regal-dimond-center-9-cinemas-aacwx/theater-page?date=2018-03-16'},headers=headers)
-    #So, we basically need the zipcode of the theater
-    zipElement=theaterSoup.find_all("div", {"class": "js-closestTheaters-lazy"})
-    sZipCode=zipElement[0].get('data-theater-zip')
-    theaterUnlockerLink = 'https://www.fandango.com/napi/nearbyTheaters?limit=7&zipCode=' + sZipCode
-    rUnlocker = requests.get(theaterUnlockerLink, headers=headers)
-    while(True):
-        if ('Not Authorized' in rUnlocker.text):
-            print('Not Authorized when requesting the zipcode link')
-            time.sleep(0.5)
-            rUnlocker = requests.get(theaterUnlockerLink, headers=headers)
-        else:
-            break
-    rMovieTimes = requests.get(theaterLinkReqMovieTime, headers=headers)
-    while(True):
-        if ('Not Authorized' in rUnlocker.text):
-            print('Not Authorized when getting the Movie times')
-            time.sleep(0.5)
-            rMovieTimes = requests.get(theaterLinkReqMovieTime, headers=headers)
-        else:
-            break
-    
+
+with open('TicketTransactionLinks.txt', 'a') as the_file:
+    #Now go through every Theater in America
+    for theaterLink in theaterLinks:
+        itest = itest+1
+        if itest == 3:
+            break;
+        #Strip is necessary because there is a /n at the end
+        theaterLink=theaterLink.strip()
+        #Need to find the code in the theater url. In TheaterLinks.txt, it follows underscore, but underscores become hyphens after the URL redirects
+        m = re.search('.*_(.*)\/theaterpage', theaterLink)
+        theaterCode = m.group(1)
+        theaterLink = requests.get(theaterLink).url
+        theaterSoup = soupLink(theaterLink)
+        theaterLinkReqMovieTime='https://www.fandango.com/napi/theaterMovieShowtimes/'+theaterCode+'?startDate='+sTomorrow+'&isdesktop=true'
+        theaterLinkReqMovieTimeValue=theaterLink+'?date='+sTomorrow
+        
+        data={'referer':theaterLinkReqMovieTimeValue}
+        headers = {**data, **userAgentHeader}
+        
+        #For some reason, we need to REQUEST.GET this url below with key/value so that our IP will be unlocked or something
+        #r = requests.get('https://www.fandango.com/napi/nearbyTheaters?limit=7&zipCode=99515', data = {'referer':'https://www.fandango.com/regal-dimond-center-9-cinemas-aacwx/theater-page?date=2018-03-16'},headers=headers)
+        #So, we basically need the zipcode of the theater
+        zipElement=theaterSoup.find_all("div", {"class": "js-closestTheaters-lazy"})
+        sZipCode=zipElement[0].get('data-theater-zip')
+        theaterUnlockerLink = 'https://www.fandango.com/napi/nearbyTheaters?limit=7&zipCode=' + sZipCode
+        rUnlocker = requests.get(theaterUnlockerLink, headers=headers)
+        while(True):
+            if ('Not Authorized' in rUnlocker.text):
+                print('Not Authorized when requesting the zipcode link')
+                time.sleep(0.5)
+                rUnlocker = requests.get(theaterUnlockerLink, headers=headers)
+            else:
+                break
+        rMovieTimes = requests.get(theaterLinkReqMovieTime, headers=headers)
+        while(True):
+            if ('Not Authorized' in rUnlocker.text):
+                print('Not Authorized when getting the Movie times')
+                time.sleep(0.5)
+                rMovieTimes = requests.get(theaterLinkReqMovieTime, headers=headers)
+            else:
+                break
+        jMovieTimes = rMovieTimes.json()
+        #jMovieTimes['viewModel']['movies'][1]['variants'][0]['amenityGroups'][0]['showtimes'][1]['ticketingUrl']
+        jMovieTimes=jMovieTimes['viewModel']['movies']
+        for movie in jMovieTimes:
+            showtimes = movie['variants'][0]['amenityGroups'][0]['showtimes']
+            for showtime in showtimes:
+                ticketingUrl=showtime['ticketingUrl']
+                the_file.write(ticketingUrl + '\n') 
