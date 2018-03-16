@@ -1,10 +1,68 @@
+//Problem is that then() gets loaded up in an array, so while loops are EXTREMELY tricky since things aren't getting evaluated right away
+//need to use array = array.concat(array2);
+//Need to use recursion for looping 
+//https://stackoverflow.com/questions/14250151/casperjs-clicking-links-in-a-nested-loop
+//https://stackoverflow.com/a/11957919
+
+
 // Set the start URL which is fandangos list of theaters
 var startUrl = 'https://www.fandango.com/site-index/movietheaters.html';
 
 // URL variables
-var visitedUrls = [];
 var stateLabels = [];
 var theaterLinks = [];
+
+function fandangoSpiderNext(match) {
+    switch(match) {
+        case 'STATES':
+            return fandangoSpiderState;
+            break;
+        case 'THEATERS':
+            return fandangoSpiderTheater;
+            break;
+        case 'MOVIEDATE1':
+            return fandangoSpiderMovieDate1;
+            break;
+        case 'MOVIEDATE2':
+            return fandangoSpiderMovieDate2;
+    }
+}
+
+
+
+function fandangoSpiderState(stateLabels) {
+    if (stateLabels.length > 0) {
+        addLinks.call(this);
+        this.run(check);
+    } else {
+        this.echo("All done.");
+        this.exit();
+    }
+}
+
+
+// Get the links, and add them to the links array
+// (It could be done all in one step, but it is intentionally splitted)
+function addLinks() {
+    this.then(function() {
+        var found = this.evaluate(searchLinks);
+        this.echo(found.length + " links found");
+        theaterLinks = theaterLinks.concat(found);
+    });
+}
+
+// Fetch all <a> elements from the page and return
+// the ones which contains a href starting with 'http://'
+function searchLinks() {
+    var filter, map;
+    filter = Array.prototype.filter;
+    map = Array.prototype.map;
+    return map.call(filter.call(document.querySelectorAll("a"), function(a) {
+        return (/./).test(a.getAttribute("href"));
+    }), function(a) {
+        return a.getAttribute("href");
+    });
+}
 
 //New Date object for today
 var today = new Date();
@@ -41,17 +99,8 @@ var casper = require('casper').create({
     logLevel: 'error'
 })
 
-
-// Function to get the list of state URL's from the Fandango State links
-function getStateLinks() {
-    return document.links;
-}
-
 // Spider from the given Fandango State list
 function fandangoSpider(url) {
-
-	// Add the URL to the visited stack
-	visitedUrls.push(url);
 
 	// Open the URL
 	casper.open(url).then(function() {
@@ -82,10 +131,26 @@ function fandangoSpider(url) {
         while (i < 2) {
             //Clicks on an unvisited State link in America. Will work because links that are visited will be selectors of E:visited only
             this.thenClickLabel(stateLabels[i]).then(function() {
-                
-            });
-
-
+                numClicks++;
+            }).then(function() {
+                theaterLabels = this.evaluate(function() {
+                    var links = document.links;
+                    var hrefs=[];
+                    //returning an array of strings that are the HREFS
+                    for (ll=0; ll < document.links.length; ll++) {
+                        hrefs.push(document.links[ll].text);
+                    }
+                    return hrefs;
+                });
+            }).then(function() {
+                while (j < 2) {
+                    //Clicks on an unvisited State link in America. Will work because links that are visited will be selectors of E:visited only
+                    this.thenClickLabel(theaterLabels[i]).then(function() {
+                        numClicks++;
+                    });
+                }
+            })
+            }
 
 
             casper.open(stateLinks[i]).then(function() {
