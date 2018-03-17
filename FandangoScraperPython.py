@@ -151,6 +151,9 @@ with open('TicketTransactionLinks.txt', 'a') as the_file:
         m = re.search('.*_(.*)\/theaterpage', theaterLink)
         theaterCode = m.group(1)
         theaterLink = requests.get(theaterLink).url
+        #Filters out the CLOSED theaters
+        if ('404' in theaterLink):
+            continue
         theaterSoup = soupLink(theaterLink)
         theaterLinkReqMovieTime='https://www.fandango.com/napi/theaterMovieShowtimes/'+theaterCode+'?startDate='+sTomorrow+'&isdesktop=true'
         theaterLinkReqMovieTimeValue=theaterLink+'?date='+sTomorrow
