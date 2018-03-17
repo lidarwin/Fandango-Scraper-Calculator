@@ -1,21 +1,15 @@
-#ChromeDriver 2.37; chromedriver.exe Needs to be in the same path
-#Selenium 3.9.0
 # -*- coding: utf-8 -*-
 """
 Created on Fri Mar 15, 2018
 
-@author: DLI3
+@author: Darwin Li
 """
-
-
-
 import os
 import requests
 from bs4 import BeautifulSoup
 import datetime
 import time
 import re
-import json
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -145,12 +139,12 @@ rUnlocker=False
 with open('TicketTransactionLinks.txt', 'a') as the_file:
     #Now go through every Theater in America
     for theaterLink in theaterLinks:
-        if (itest==0):
-            itest = itest+1
-            continue
-        itest = itest+1
-        if itest == 3:
-            break;
+#        if (itest==0):
+#            itest = itest+1
+#            continue
+#        itest = itest+1
+#        if itest == 3:
+#            break;
         #Strip is necessary because there is a /n at the end
         theaterLink=theaterLink.strip()
         #Need to find the code in the theater url. In TheaterLinks.txt, it follows underscore, but underscores become hyphens after the URL redirects
