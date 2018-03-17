@@ -31,6 +31,9 @@ theaterLinks=[]
 #This list will get output in text file on the fly in case something goes wrong
 movieTicketLinks=[]
 
+#Dictionary of every ticket price in USA that is purchasable on Fandango.
+#Maps float dollar ammount to a list of theater links. The information of the movie itself and the type (Adult, Child, Senior) is lost
+ticketPrices = {}
     
 def soupLink(url, baseURL='', headers={}):
     """ Takes in a URL and proceeds to return a BeautifulSoup HTML parsed object. BASEURL is required when the URL does not have HTTPS://
@@ -64,6 +67,67 @@ else:
     with open('TheaterLinks.txt', "r") as myfile:
         theaterLinks = myfile.readlines()
 
+def getPrices(ticketingUrl, theaterLink, ticketPrices):
+    """ Takes in a TICKETINGURL and proceeds to checkout with all possible ticket types (Adult, Child, Senior). Saves the price for each ticket (with fandang convenience fee) as keys in a dictionary TICKETPRICES with the values as the THEATERLINK
+    """
+    # instantiate a chrome options object so you can set the size and headless preference
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--window-size=1920x1080")
+    
+    # current directory
+    chrome_driver = os.getcwd() +"\\chromedriver.exe"
+    
+    driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
+    
+    driver.get(ticketingUrl)
+    
+    #The below are the commands in javascript that we need to do in JS and translate into selenium
+    #document.getElementById('AreaRepeater_TicketRepeater_0_quantityddl_0').selectedIndex=1;
+    #document.getElementsByClassName('qtyDropDowns')[0]
+    #document.getElementById('NewCustomerCheckoutButton').click()
+    #document.getElementById('purchaseTotal').textContent
+    
+    dropDownElements = driver.find_elements_by_class_name('qtyDropDown')
+    for i in range(0, len(dropDownElements)):
+        dropDownElements=driver.find_elements_by_class_name('qtyDropDown')
+        quantSelect = Select(dropDownElements[i])
+        quantSelect.select_by_index(1)
+        driver.find_element_by_id('NewCustomerCheckoutButton').click()
+        eTotal = driver.find_element_by_id('purchaseTotal')
+        usdTotal = eTotal.get_attribute('textContent')
+        fTotal = float(usdTotal[1:])
+        if fTotal in ticketPrices:
+            break;
+        ticketPrices[fTotal] = theaterLink
+        print(str(fTotal))
+        driver.quit()
+        driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
+        driver.get(ticketingUrl)
+    driver.quit()
+    driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
+    driver.get(ticketingUrl)
+    #The below are the commands in javascript that we need to do in JS and translate to selenium
+    #document.getElementsByClassName('input_txt')[0].value=1
+    textInputElements = driver.find_elements_by_class_name('input_txt')
+    for i in range(0, len(textInputElements)):
+        textInputElements=driver.find_elements_by_class_name('input_txt')
+        textInputElement = textInputElements[i]
+        textInputElement.clear()
+        textInputElement.send_keys('1')
+        driver.find_element_by_id('NewCustomerCheckoutButton').click()
+        eTotal = driver.find_element_by_id('purchaseTotal')
+        usdTotal = eTotal.get_attribute('textContent')
+        fTotal = float(usdTotal[1:])
+        if fTotal in ticketPrices:
+            break;
+        ticketPrices[fTotal] = theaterLink
+        print(str(fTotal))
+        driver.quit()
+        driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
+        driver.get(ticketingUrl)
+
+
 
 #For formatting when doing the requests
 sTomorrow = str(datetime.date.today() + datetime.timedelta(1))
@@ -81,6 +145,9 @@ rUnlocker=False
 with open('TicketTransactionLinks.txt', 'a') as the_file:
     #Now go through every Theater in America
     for theaterLink in theaterLinks:
+        if (itest==0):
+            itest = itest+1
+            continue
         itest = itest+1
         if itest == 3:
             break;
@@ -128,26 +195,4 @@ with open('TicketTransactionLinks.txt', 'a') as the_file:
                 ticketingUrl=showtime['ticketingUrl']
                 movieTicketLinks.append(ticketingUrl)
                 the_file.write(ticketingUrl + '\n')
-                
-                # instantiate a chrome options object so you can set the size and headless preference
-                chrome_options = Options()
-                chrome_options.add_argument("--headless")
-                chrome_options.add_argument("--window-size=1920x1080")
-                
-                # current directory
-                chrome_driver = os.getcwd() +"\\chromedriver.exe"
-                
-                driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
-                driver.get(ticketingUrl)
-                
-                #The below are the commands in javascript that we need to do
-                #document.getElementById('AreaRepeater_TicketRepeater_0_quantityddl_0').selectedIndex=1;
-                #document.getElementById('NewCustomerCheckoutButton').click()
-                #document.getElementById('purchaseTotal').textContent
-                
-                quantSelect = Select( driver.find_element_by_id('AreaRepeater_TicketRepeater_0_quantityddl_0') )
-                quantSelect.select_by_index(1)
-                driver.find_element_by_id('NewCustomerCheckoutButton').click()
-                eTotal = driver.find_element_by_id('purchaseTotal')
-                usdTotal = eTotal.get_attribute('textContent')
-                fTotal = float(usdTotal[1:])
+                getPrices(ticketingUrl, theaterLink, ticketPrices)
