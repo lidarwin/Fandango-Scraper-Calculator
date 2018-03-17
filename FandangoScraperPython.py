@@ -1,16 +1,35 @@
+#ChromeDriver 2.37; chromedriver.exe Needs to be in the same path
+#Selenium 3.9.0
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar 15, 2018
+
+@author: DLI3
+"""
+
+
+
 import os
 import requests
 from bs4 import BeautifulSoup
 import datetime
 import time
 import re
+import json
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.select import Select
+
+#https://medium.com/@pyzzled/running-headless-chrome-with-selenium-in-python-3f42d1f5ff1d
 
 
 #List of all urls to every theater in America that is on Fandango.com
 theaterLinks=[]
 
 #List of all urls to every movie at every movietime sold on Fandango.com
-#This list will get output in text file on the fly, but 
+#This list will get output in text file on the fly in case something goes wrong
+movieTicketLinks=[]
 
     
 def soupLink(url, baseURL='', headers={}):
@@ -107,4 +126,28 @@ with open('TicketTransactionLinks.txt', 'a') as the_file:
             showtimes = movie['variants'][0]['amenityGroups'][0]['showtimes']
             for showtime in showtimes:
                 ticketingUrl=showtime['ticketingUrl']
-                the_file.write(ticketingUrl + '\n') 
+                movieTicketLinks.append(ticketingUrl)
+                the_file.write(ticketingUrl + '\n')
+                
+                # instantiate a chrome options object so you can set the size and headless preference
+                chrome_options = Options()
+                chrome_options.add_argument("--headless")
+                chrome_options.add_argument("--window-size=1920x1080")
+                
+                # current directory
+                chrome_driver = os.getcwd() +"\\chromedriver.exe"
+                
+                driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
+                driver.get(ticketingUrl)
+                
+                #The below are the commands in javascript that we need to do
+                #document.getElementById('AreaRepeater_TicketRepeater_0_quantityddl_0').selectedIndex=1;
+                #document.getElementById('NewCustomerCheckoutButton').click()
+                #document.getElementById('purchaseTotal').textContent
+                
+                quantSelect = Select( driver.find_element_by_id('AreaRepeater_TicketRepeater_0_quantityddl_0') )
+                quantSelect.select_by_index(1)
+                driver.find_element_by_id('NewCustomerCheckoutButton').click()
+                eTotal = driver.find_element_by_id('purchaseTotal')
+                usdTotal = eTotal.get_attribute('textContent')
+                fTotal = float(usdTotal[1:])
