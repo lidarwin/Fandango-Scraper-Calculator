@@ -12,6 +12,7 @@ import time
 import re
 
 from selenium import webdriver
+import selenium.webdriver.chrome.service as service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
 
@@ -60,18 +61,19 @@ if (not os.path.isfile('TheaterLinks.txt')):
 else:
     with open('TheaterLinks.txt', "r") as myfile:
         theaterLinks = myfile.readlines()
+        
+        
+# instantiate a chrome options object so you can set the size and headless preference
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--window-size=1920x1080")
+
+# current directory
+chrome_driver = os.getcwd() +"\\chromedriver.exe"
 
 def getPrices(ticketingUrl, theaterLink, ticketPrices):
     """ Takes in a TICKETINGURL and proceeds to checkout with all possible ticket types (Adult, Child, Senior). Saves the price for each ticket (with fandang convenience fee) as keys in a dictionary TICKETPRICES with the values as the THEATERLINK
     """
-    # instantiate a chrome options object so you can set the size and headless preference
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--window-size=1920x1080")
-    
-    # current directory
-    chrome_driver = os.getcwd() +"\\chromedriver.exe"
-    
     driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
     
     driver.get(ticketingUrl)
@@ -135,6 +137,11 @@ itest=0
 rMovieTimes=False
 rUnlocker=False
 
+#Start the Selenium server with the headless chrome driver
+service = service.Service(chrome_driver)
+service.start()
+#Start Selenium webdriver service on the server in headless mode
+driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
 
 with open('TicketTransactionLinks.txt', 'a') as the_file:
     #Now go through every Theater in America
