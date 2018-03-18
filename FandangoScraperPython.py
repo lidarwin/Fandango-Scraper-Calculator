@@ -175,7 +175,7 @@ with open('TicketTransactionLinks.txt', 'a') as the_file:
         sZipCode=zipElement[0].get('data-theater-zip')
         theaterUnlockerLink = 'https://www.fandango.com/napi/nearbyTheaters?limit=7&zipCode=' + sZipCode
         rUnlocker = requests.get(theaterUnlockerLink, headers=headers)
-        while(True):
+        for i in range(0,1000):
             if ('Not Authorized' in rUnlocker.text):
                 print('Not Authorized when requesting the zipcode link')
                 time.sleep(0.5)
@@ -183,20 +183,25 @@ with open('TicketTransactionLinks.txt', 'a') as the_file:
             else:
                 break
         rMovieTimes = requests.get(theaterLinkReqMovieTime, headers=headers)
-        while(True):
+        for i in range(0,1000):
             if ('Not Authorized' in rUnlocker.text):
                 print('Not Authorized when getting the Movie times')
                 time.sleep(0.5)
                 rMovieTimes = requests.get(theaterLinkReqMovieTime, headers=headers)
             else:
                 break
-        jMovieTimes = rMovieTimes.json()
-        #jMovieTimes['viewModel']['movies'][1]['variants'][0]['amenityGroups'][0]['showtimes'][1]['ticketingUrl']
-        jMovieTimes=jMovieTimes['viewModel']['movies']
-        for movie in jMovieTimes:
-            showtimes = movie['variants'][0]['amenityGroups'][0]['showtimes']
-            for showtime in showtimes:
-                ticketingUrl=showtime['ticketingUrl']
-                movieTicketLinks.append(ticketingUrl)
-                the_file.write(ticketingUrl + '\n')
-                getPrices(ticketingUrl, theaterLink, ticketPrices)
+        try:
+            jMovieTimes = rMovieTimes.json()
+            #jMovieTimes['viewModel']['movies'][1]['variants'][0]['amenityGroups'][0]['showtimes'][1]['ticketingUrl']
+            jMovieTimes=jMovieTimes['viewModel']['movies']
+            for movie in jMovieTimes:
+                showtimes = movie['variants'][0]['amenityGroups'][0]['showtimes']
+                for showtime in showtimes:
+                    ticketingUrl=showtime['ticketingUrl']
+                    movieTicketLinks.append(ticketingUrl)
+                    the_file.write(ticketingUrl + '\n')
+                    getPrices(ticketingUrl, theaterLink, ticketPrices)
+        except KeyboardInterrupt:
+            1+1==2
+        except:
+            continue
