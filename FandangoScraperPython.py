@@ -16,8 +16,6 @@ import selenium.webdriver.chrome.service as serv
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
 
-#https://medium.com/@pyzzled/running-headless-chrome-with-selenium-in-python-3f42d1f5ff1d
-
     
 def soupLink(url, baseURL='', headers={}):
     """ Takes in a URL and proceeds to return a BeautifulSoup HTML parsed object. BASEURL is required when the URL does not have HTTPS://
@@ -49,10 +47,12 @@ def getPrices(ticketingUrl, theaterLink, ticketPrices):
         eTotal = driver.find_element_by_id('purchaseTotal')
         usdTotal = eTotal.get_attribute('textContent')
         fTotal = float(usdTotal[1:])
-        if fTotal in ticketPrices:
+        fTotal = fTotal*100
+        iTotal = int(fTotal)
+        if iTotal in ticketPrices:
             break;
-        ticketPrices[fTotal] = ticketingUrl
-        print(str(fTotal))
+        ticketPrices[iTotal] = ticketingUrl
+        print(str(iTotal))
         driver.quit()
         driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
         driver.get(ticketingUrl)
@@ -71,30 +71,63 @@ def getPrices(ticketingUrl, theaterLink, ticketPrices):
         eTotal = driver.find_element_by_id('purchaseTotal')
         usdTotal = eTotal.get_attribute('textContent')
         fTotal = float(usdTotal[1:])
-        if fTotal in ticketPrices:
+        fTotal = fTotal*100
+        iTotal = int(fTotal)
+        if iTotal in ticketPrices:
             break;
-        ticketPrices[fTotal] = ticketingUrl
-        print(str(fTotal))
+        ticketPrices[iTotal] = ticketingUrl
+        print(str(iTotal))
         driver.quit()
         driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
         driver.get(ticketingUrl)
-        
 
-def fandangoCalculate(target, prices):
+def fandangoCalculate(target, prices, error):
+    ''' Takes a TARGET value, and a dictionary PRICES for which we are only concerned with the integer keys of, and returns an array of PRICES (with duplicates) that sum up to a value that is between TARGET and TARGET-ERROR. Basically solves the unbounded knapsack problem with dynamic programming with equal weighting on all items
+    '''
     dp=[0]*(target + 1)
     #Store the index of dp as the key and the value as an array of prices that are needed with duplicates
     dic = {}
+    prices = list(prices.keys())
     prices = prices.sort()
     for i in range(0,target):
         for j in range(0, len(prices)):
             if (prices[j] <= i):
-                dp[i] = max(dp[i], dp[i - prices[j]] + prices[j])
-                if (i in dic):
-                    dic[i] = dic[i].append(prices[j])
-    return dic[target]
+                if (dp[i] < dp[i - prices[j]] + prices[j]):
+                    dp[i] = dp[i - prices[j]] + prices[j]
+                    if (i in dic):
+                        dic[i] = dic[i].append(prices[j])
+                    else:
+                        dic[i] = [prices[j]]
+    print(dp[target])
+    print(dic[target])
+    if (target - error <= dp[target]):
+        return dic[target]
+    else:
+        return False
     
 
 def main():
+    target = 0.
+    error = 0.
+    code = 'r'
+    while(True):
+        s = input('Please enter desired amount to spend on Fandango followed by an amount to deviate from this, and then -a,-r,-[state code] for scraping alphabetically by state, randomly, or limited to a specific state by its state code \n An example input for scraping Alaskan theaters without calculation would be: \n 0 0 -ak \n An example of calculating a target value of $100.00 USD with deviation of $1.01 scraping theaters in states of no particular order would be:\n 100 1.01 -r')
+        ''' To get the list of state codes, use the follow javascript:
+            stri = ''
+            for (i=0; i < document.links.length; i++) {
+                    i = stri + document.links[i].href.substring(45,47)+'|'
+            }
+            console.log(stri)
+        '''
+        m = re.search('([0-9\.]+)\s([0-9\.]+)\s-(ak|al|ar|az|ca|ca|co|ct|dc|de|fl|ga|hi|ia|id|il|in|ks|ky|la|ma|md|me|mi|mn|mo|ms|mt|nc|nd|ne|nh|nj|nm|nv|ny|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|va|vt|wa|wi|wv|wy|a|r)', s)
+        if (m is not None):
+            target = float(m[1])
+            error = float(m[2])
+            code = m[3]
+            print('Starting...')
+            break
+        print('Input not understood. Make sure to use only lower-case')
+    
     #List of all urls to every theater in America that is on Fandango.com
     theaterLinks=[]
     
@@ -217,6 +250,9 @@ def main():
                         movieTicketLinks.append(ticketingUrl)
                         the_file.write(ticketingUrl + '\n')
                         getPrices(ticketingUrl, theaterLink, ticketPrices)
+                        fandangoCalculated = fandangoCalculate(target, ticketPrices, error)
+                        if (fandangoCalculated):
+                            return fandangoCalculated
             except KeyboardInterrupt:
                 return
             except:
