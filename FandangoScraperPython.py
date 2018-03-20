@@ -282,14 +282,16 @@ def main():
                         if(getPrices(service, chrome_options,ticketingUrl, theaterLink, ticketPrices)):
                             fandangoCalculated = fandangoCalculate(target, ticketPrices, error)
                             if (fandangoCalculated):
-                                for tic in fandangoCalculated:
+                                uniqueFandangoCalculated = list(set(fandangoCalculated))
+                                for tic in uniqueFandangoCalculated:
                                     sTic = str(tic)
                                     print('Buy ' + str(fandangoCalculated.count(tic)) + ' times ' + 'at price: $' + sTic[0:len(sTic)-2] + '.' + sTic[len(sTic)-2:] + ' from the link below:')
                                     print(ticketPrices[tic] + '\n')
                                 return ticketPrices
             except KeyboardInterrupt:
                 print('Aborted, but this is the best result')
-                for tic in fandangoCalculated:
+                uniqueFandangoCalculated = list(set(fandangoCalculated))
+                for tic in uniqueFandangoCalculated:
                     sTic = str(tic)
                     print('Buy ' + str(fandangoCalculated.count(tic)) + ' times ' + 'at price: $' + sTic[0:len(sTic)-2] + '.' + sTic[len(sTic)-2:] + ' from the link below:')
                     print(ticketPrices[tic] + '\n')
