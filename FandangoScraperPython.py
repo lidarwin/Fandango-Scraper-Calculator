@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 import datetime
 import time
 import re
-
+from random import shuffle
 from selenium import webdriver
 import selenium.webdriver.chrome.service as serv
 from selenium.webdriver.chrome.options import Options
@@ -18,18 +18,25 @@ from selenium.webdriver.support.select import Select
 
     
 def soupLink(url, baseURL='', headers={}):
-    """ Takes in a URL and proceeds to return a BeautifulSoup HTML parsed object. BASEURL is required when the URL does not have HTTPS://
+    """ 
+    Takes in a URL and proceeds to return a BeautifulSoup HTML parsed 
+    object. BASEURL is required when the URL does not have HTTPS://
     """
     r = requests.get(baseURL + url, data={})
     c = r.content
     return BeautifulSoup(c,'html.parser')
 
 
-def getPrices(ticketingUrl, theaterLink, ticketPrices):
-    """ Takes in a TICKETINGURL and proceeds to checkout with all possible ticket types (Adult, Child, Senior). Saves the price for each ticket (with fandang convenience fee) as keys in a dictionary TICKETPRICES with the values as the TICKETINGURL
+def getPrices(service, chrome_options, ticketingUrl, theaterLink, ticketPrices):
+    """ 
+    Takes in a TICKETINGURL and proceeds to checkout with all possible ticket 
+    types (Adult, Child, Senior). Saves the price for each ticket (with 
+    fandango convenience fee) as keys in a dictionary TICKETPRICES with the 
+    values as the TICKETINGURL
+    Returns True if at least 1 price was added to the THEATERPRICES dictioanry
     """
-    driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
-    
+    #Start Selenium webdriver service on the server in headless mode
+    driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
     driver.get(ticketingUrl)
     
     #The below are the commands in javascript that we need to do in JS and translate into selenium
@@ -39,6 +46,12 @@ def getPrices(ticketingUrl, theaterLink, ticketPrices):
     #document.getElementById('purchaseTotal').textContent
     
     dropDownElements = driver.find_elements_by_class_name('qtyDropDown')
+    
+    success=False
+    
+    if (len(dropDownElements) > 0):
+        success = True
+    
     for i in range(0, len(dropDownElements)):
         dropDownElements=driver.find_elements_by_class_name('qtyDropDown')
         quantSelect = Select(dropDownElements[i])
@@ -46,22 +59,25 @@ def getPrices(ticketingUrl, theaterLink, ticketPrices):
         driver.find_element_by_id('NewCustomerCheckoutButton').click()
         eTotal = driver.find_element_by_id('purchaseTotal')
         usdTotal = eTotal.get_attribute('textContent')
-        fTotal = float(usdTotal[1:])
-        fTotal = fTotal*100
-        iTotal = int(fTotal)
+        iTotal = int(usdTotal[1:usdTotal.index('.')]+usdTotal[usdTotal.index('.')+1:])
         if iTotal in ticketPrices:
+            if (i == 0):
+                success = False
             break;
         ticketPrices[iTotal] = ticketingUrl
-        print(str(iTotal))
+        print(str(iTotal) + ' out of length ' + str(len(dropDownElements)) + ' as index ' + str(i))
         driver.quit()
-        driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
+        driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
         driver.get(ticketingUrl)
     driver.quit()
-    driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
+    driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
     driver.get(ticketingUrl)
     #The below are the commands in javascript that we need to do in JS and translate to selenium
     #document.getElementsByClassName('input_txt')[0].value=1
     textInputElements = driver.find_elements_by_class_name('input_txt')
+    
+    if (len(textInputElements) > 0):
+        success = True
     for i in range(0, len(textInputElements)):
         textInputElements=driver.find_elements_by_class_name('input_txt')
         textInputElement = textInputElements[i]
@@ -70,34 +86,44 @@ def getPrices(ticketingUrl, theaterLink, ticketPrices):
         driver.find_element_by_id('NewCustomerCheckoutButton').click()
         eTotal = driver.find_element_by_id('purchaseTotal')
         usdTotal = eTotal.get_attribute('textContent')
-        fTotal = float(usdTotal[1:])
-        fTotal = fTotal*100
-        iTotal = int(fTotal)
+        iTotal = int(usdTotal[1:usdTotal.index('.')]+usdTotal[usdTotal.index('.')+1:])
         if iTotal in ticketPrices:
+            if (i == 0):
+                success = False
+            success = False
             break;
         ticketPrices[iTotal] = ticketingUrl
-        print(str(iTotal))
+        print(str(iTotal) + ' out of length ' + str(len(textInputElements)) + ' as index ' + str(i))
         driver.quit()
-        driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=chrome_driver)
+        driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
         driver.get(ticketingUrl)
+    return success
 
 def fandangoCalculate(target, prices, error):
-    ''' Takes a TARGET value, and a dictionary PRICES for which we are only concerned with the integer keys of, and returns an array of PRICES (with duplicates) that sum up to a value that is between TARGET and TARGET-ERROR. Basically solves the unbounded knapsack problem with dynamic programming with equal weighting on all items
+    ''' 
+    Takes a TARGET value, and a dictionary PRICES for which we are only 
+    concerned with the integer keys of, and returns an array of PRICES 
+    (with duplicates) that sum up to a value that is between TARGET and 
+    TARGET minus ERROR. Basically solves the unbounded knapsack problem with 
+    dynamic programming with equal weighting on all items
     '''
     dp=[0]*(target + 1)
     #Store the index of dp as the key and the value as an array of prices that are needed with duplicates
-    dic = {}
-    prices = list(prices.keys())
-    prices = prices.sort()
-    for i in range(0,target):
+    dic = {-1:[]}
+    prices = [*prices]
+    prices.sort()
+    for i in range(0, target + 1):
         for j in range(0, len(prices)):
             if (prices[j] <= i):
                 if (dp[i] < dp[i - prices[j]] + prices[j]):
                     dp[i] = dp[i - prices[j]] + prices[j]
                     if (i in dic):
-                        dic[i] = dic[i].append(prices[j])
-                    else:
-                        dic[i] = [prices[j]]
+                        dic.pop(i)
+                    temp = list(dic[i - prices[j]])
+                    temp.append(prices[j])
+                    dic[i]=temp
+            elif (i not in dic):
+                dic[i]=list(dic[i-1])
     print(dp[target])
     print(dic[target])
     if (target - error <= dp[target]):
@@ -107,11 +133,11 @@ def fandangoCalculate(target, prices, error):
     
 
 def main():
-    target = 0.
-    error = 0.
-    code = 'r'
+    target = 0
+    error = 0
+    code = 'a'
     while(True):
-        s = input('Please enter desired amount to spend on Fandango followed by an amount to deviate from this, and then -a,-r,-[state code] for scraping alphabetically by state, randomly, or limited to a specific state by its state code \n An example input for scraping Alaskan theaters without calculation would be: \n 0 0 -ak \n An example of calculating a target value of $100.00 USD with deviation of $1.01 scraping theaters in states of no particular order would be:\n 100 1.01 -r')
+        s = input('Please enter desired amount to spend on Fandango followed by an amount to deviate from this, and then -a,-r,-[state code] for scraping alphabetically by state, randomly, or limited to a specific state by its state code \n An example input for scraping Alaskan theaters without calculation would be: \n 0.00 0.00 -ak \n An example of calculating a target value of $100.00 USD with deviation of $1.01 scraping theaters in states of no particular order would be:\n 100.00 1.01 -r')
         ''' To get the list of state codes, use the follow javascript:
             stri = ''
             for (i=0; i < document.links.length; i++) {
@@ -119,14 +145,16 @@ def main():
             }
             console.log(stri)
         '''
-        m = re.search('([0-9\.]+)\s([0-9\.]+)\s-(ak|al|ar|az|ca|ca|co|ct|dc|de|fl|ga|hi|ia|id|il|in|ks|ky|la|ma|md|me|mi|mn|mo|ms|mt|nc|nd|ne|nh|nj|nm|nv|ny|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|va|vt|wa|wi|wv|wy|a|r)', s)
+        m = re.search('([0-9]+\.[0-9]{2})\s([0-9]+\.[0-9]{2})\s-(ak|al|ar|az|ca|ca|co|ct|dc|de|fl|ga|hi|ia|id|il|in|ks|ky|la|ma|md|me|mi|mn|mo|ms|mt|nc|nd|ne|nh|nj|nm|nv|ny|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|va|vt|wa|wi|wv|wy|a|r)', s)
         if (m is not None):
-            target = float(m[1])
-            error = float(m[2])
+            target = m[1]
+            target = int(target[0:target.index('.')]+target[target.index('.')+1:target.index('.')+3])
+            error = m[2]
+            error = int(error[0:error.index('.')]+error[error.index('.')+1:error.index('.')+3])
             code = m[3]
             print('Starting...')
             break
-        print('Input not understood. Make sure to use only lower-case')
+        print('Input not understood. Make sure there are two decimal points after the numbers and make sure to use only lower-case')
     
     #List of all urls to every theater in America that is on Fandango.com
     theaterLinks=[]
@@ -172,7 +200,10 @@ def main():
     
     # current directory
     chrome_driver = os.getcwd() +"\\chromedriver.exe"
-    
+        
+    #Start the Selenium server with the headless chrome driver
+    service = serv.Service(chrome_driver)
+    service.start()
     
     #For formatting when doing the requests
     sTomorrow = str(datetime.date.today() + datetime.timedelta(1))
@@ -185,13 +216,9 @@ def main():
     
     rMovieTimes=False
     rUnlocker=False
-    
-    #Start the Selenium server with the headless chrome driver
-    service = serv.Service(chrome_driver)
-    service.start()
-    #Start Selenium webdriver service on the server in headless mode
-    driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
-    
+
+    if (code == 'r'):
+        shuffle(theaterLinks)
     with open('TicketTransactionLinks.txt', 'a') as the_file:
         #Now go through every Theater in America
         for theaterLink in theaterLinks:
@@ -249,10 +276,14 @@ def main():
                         ticketingUrl=showtime['ticketingUrl']
                         movieTicketLinks.append(ticketingUrl)
                         the_file.write(ticketingUrl + '\n')
-                        getPrices(ticketingUrl, theaterLink, ticketPrices)
-                        fandangoCalculated = fandangoCalculate(target, ticketPrices, error)
-                        if (fandangoCalculated):
-                            return fandangoCalculated
+                        if(getPrices(service, chrome_options,ticketingUrl, theaterLink, ticketPrices)):
+                            fandangoCalculated = fandangoCalculate(target, ticketPrices, error)
+                            if (fandangoCalculated):
+                                for tic in fandangoCalculated:
+                                    sTic = str(tic)
+                                    print('Buy ' + str(fandangoCalculated.count(tic)) + ' times ' + 'at price: $' + sTic[0:len(sTic)-2] + '.' + sTic[len(sTic)-2:] + ' from the link below:')
+                                    print(ticketPrices[tic] + '\n')
+                                return ticketPrices
             except KeyboardInterrupt:
                 return
             except:
