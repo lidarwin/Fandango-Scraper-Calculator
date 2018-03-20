@@ -63,7 +63,7 @@ def getPrices(driver, chrome_options, ticketingUrl, theaterLink, ticketPrices):
                 success = False
             break;
         ticketPrices[iTotal] = ticketingUrl
-        print(str(iTotal) + ' out of length ' + str(len(dropDownElements)) + ' as index ' + str(i))
+        #print(str(iTotal) + ' out of length ' + str(len(dropDownElements)) + ' as index ' + str(i))
     driver.get(ticketingUrl)
     #The below are the commands in javascript that we need to do in JS and translate to selenium
     #document.getElementsByClassName('input_txt')[0].value=1
@@ -86,7 +86,7 @@ def getPrices(driver, chrome_options, ticketingUrl, theaterLink, ticketPrices):
             success = False
             break;
         ticketPrices[iTotal] = ticketingUrl
-        print(str(iTotal) + ' out of length ' + str(len(textInputElements)) + ' as index ' + str(i))
+        #print(str(iTotal) + ' out of length ' + str(len(textInputElements)) + ' as index ' + str(i))
         driver.get(ticketingUrl)
     return success
 
@@ -115,8 +115,8 @@ def fandangoCalculate(target, prices, error):
                     dic[i]=temp
             elif (i not in dic):
                 dic[i]=list(dic[i-1])
-    print(dp[target])
-    print(dic[target])
+    #print(dp[target])
+    #print(dic[target])
     if (target - error <= dp[target]):
         return dic[target]
     else:
