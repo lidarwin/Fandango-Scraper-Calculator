@@ -27,7 +27,7 @@ def soupLink(url, baseURL='', headers={}):
     return BeautifulSoup(c,'html.parser')
 
 
-def getPrices(service, chrome_options, ticketingUrl, theaterLink, ticketPrices):
+def getPrices(driver, chrome_options, ticketingUrl, theaterLink, ticketPrices):
     """ 
     Takes in a TICKETINGURL and proceeds to checkout with all possible ticket 
     types (Adult, Child, Senior). Saves the price for each ticket (with 
@@ -35,8 +35,6 @@ def getPrices(service, chrome_options, ticketingUrl, theaterLink, ticketPrices):
     values as the TICKETINGURL
     Returns True if at least 1 price was added to the THEATERPRICES dictioanry
     """
-    #Start Selenium webdriver service on the server in headless mode
-    driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
     driver.get(ticketingUrl)
     
     #The below are the commands in javascript that we need to do in JS and translate into selenium
@@ -66,11 +64,6 @@ def getPrices(service, chrome_options, ticketingUrl, theaterLink, ticketPrices):
             break;
         ticketPrices[iTotal] = ticketingUrl
         print(str(iTotal) + ' out of length ' + str(len(dropDownElements)) + ' as index ' + str(i))
-        driver.quit()
-        driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
-        driver.get(ticketingUrl)
-    driver.quit()
-    driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
     driver.get(ticketingUrl)
     #The below are the commands in javascript that we need to do in JS and translate to selenium
     #document.getElementsByClassName('input_txt')[0].value=1
@@ -94,8 +87,6 @@ def getPrices(service, chrome_options, ticketingUrl, theaterLink, ticketPrices):
             break;
         ticketPrices[iTotal] = ticketingUrl
         print(str(iTotal) + ' out of length ' + str(len(textInputElements)) + ' as index ' + str(i))
-        driver.quit()
-        driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
         driver.get(ticketingUrl)
     return success
 
@@ -208,6 +199,10 @@ def main():
     service = serv.Service(chrome_driver)
     service.start()
     
+    #Start Selenium webdriver service on the server in headless mode
+    driver = webdriver.Remote(service.service_url,   desired_capabilities=chrome_options.to_capabilities())
+
+    
     #For formatting when doing the requests
     sTomorrow = str(datetime.date.today() + datetime.timedelta(1))
     
@@ -279,7 +274,7 @@ def main():
                         ticketingUrl=showtime['ticketingUrl']
                         movieTicketLinks.append(ticketingUrl)
                         the_file.write(ticketingUrl + '\n')
-                        if(getPrices(service, chrome_options,ticketingUrl, theaterLink, ticketPrices)):
+                        if(getPrices(driver, chrome_options,ticketingUrl, theaterLink, ticketPrices)):
                             fandangoCalculated = fandangoCalculate(target, ticketPrices, error)
                             if (fandangoCalculated):
                                 uniqueFandangoCalculated = list(set(fandangoCalculated))
