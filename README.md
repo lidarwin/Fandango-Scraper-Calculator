@@ -12,10 +12,11 @@ selenium 3.9.0
 ChromeDriver 2.37
 
 Instructions:
-1) Use pip or Anaconda to install requests, beautifulsoup4, and selenium
-2) Download chromedriver.exe from https://sites.google.com/a/chromium.org/chromedriver/downloads
-3) Run fandango_scraper_calculator.py and follow the prompt
-
+1) Install Python 3.6.4 (independently or throguh Anaconda)
+2) Use pip or Anaconda to install requests, beautifulsoup4, and selenium
+3) Download chromedriver.exe from https://sites.google.com/a/chromium.org/chromedriver/downloads
+4) Run fandango_scraper_calculator.py and follow the prompt
+5) Follow below instructions for user input
 To drive the script, the prompt will ask:
 Please enter desired amount to spend on Fandango followed by an amount to deviate from this, and then -a,-r,-[state code] for scraping alphabetically by state, randomly, or limited to a specific state by its state code
 
@@ -26,3 +27,24 @@ An example of calculating a target value of $100.00 USD with deviation of $1.01 
 100.00 1.01 -r
 
 Make sure that the input that follows the hyphen is always lower case. If a state is not recognized or the numerical values do not have enough precision in terms of the cents, then the prompt will appear again.
+
+A sample output
+
+Input:
+60.06 0.00 -r
+
+Output:
+Buy 2 times at price: $5.18 from the link below:
+https://tickets.fandango.com/Transaction/Ticketing/ticketboxoffice.aspx?row_count=214711646&tid=aainz&sdate=2018-03-20+13:30&mid=208042&from=mov_det_showtimes
+
+Buy 1 times at price: $7.80 from the link below:
+https://tickets.fandango.com/Transaction/Ticketing/ticketboxoffice.aspx?row_count=214711615&tid=aainz&sdate=2018-03-20+16:20&mid=209874&from=mov_det_showtimes
+
+Buy 3 times at price: $7.50 from the link below:
+https://tickets.fandango.com/Transaction/Ticketing/ticketboxoffice.aspx?row_count=216545650&tid=aawdu&sdate=2018-03-20+11:30&mid=208220&from=mov_det_showtimes
+
+Buy 1 times at price: $9.50 from the link below:
+https://tickets.fandango.com/Transaction/Ticketing/ticketboxoffice.aspx?row_count=216545646&tid=aawdu&sdate=2018-03-20+13:30&mid=208042&from=mov_det_showtimes
+
+Buy 1 times at price: $9.90 from the link below:
+https://tickets.fandango.com/Transaction/Ticketing/ticketboxoffice.aspx?row_count=214711616&tid=aainz&sdate=2018-03-20+22:10&mid=209874&from=mov_det_showtimes
