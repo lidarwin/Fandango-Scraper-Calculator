@@ -35,16 +35,21 @@ Input:
 
 Output:
 Buy 2 times at price: $5.18 from the link below:
+
 https://tickets.fandango.com/Transaction/Ticketing/ticketboxoffice.aspx?row_count=214711646&tid=aainz&sdate=2018-03-20+13:30&mid=208042&from=mov_det_showtimes
 
 Buy 1 times at price: $7.80 from the link below:
+
 https://tickets.fandango.com/Transaction/Ticketing/ticketboxoffice.aspx?row_count=214711615&tid=aainz&sdate=2018-03-20+16:20&mid=209874&from=mov_det_showtimes
 
 Buy 3 times at price: $7.50 from the link below:
+
 https://tickets.fandango.com/Transaction/Ticketing/ticketboxoffice.aspx?row_count=216545650&tid=aawdu&sdate=2018-03-20+11:30&mid=208220&from=mov_det_showtimes
 
 Buy 1 times at price: $9.50 from the link below:
+
 https://tickets.fandango.com/Transaction/Ticketing/ticketboxoffice.aspx?row_count=216545646&tid=aawdu&sdate=2018-03-20+13:30&mid=208042&from=mov_det_showtimes
 
 Buy 1 times at price: $9.90 from the link below:
+
 https://tickets.fandango.com/Transaction/Ticketing/ticketboxoffice.aspx?row_count=214711616&tid=aainz&sdate=2018-03-20+22:10&mid=209874&from=mov_det_showtimes
