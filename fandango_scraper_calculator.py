@@ -190,11 +190,31 @@ def main():
     # instantiate a chrome options object so you can set the size and headless preference
     chrome_options = Options()
     chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--window-size=1920x1080")
+    #chrome_options.add_argument("--window-size=1920x1080")
     
     # current directory
-    chrome_driver = os.getcwd() +"\\chromedriver.exe"
-        
+    #Support for Windows and Linux
+    chrome_drivers =[os.getcwd() +"\\chromedriver.exe", os.getcwd() +"/chromedriver"]
+    
+    chrome_binaries=['/usr/bin/google-chrome','/usr/bin/chromium-browser','/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
+    
+    chrome_driver=''
+    chrome_binary=''
+    
+    for i in chrome_drivers:
+        if (os.path.isfile(i)):
+            chrome_driver = i
+            break;
+    if (not os.path.isfile(chrome_driver)):
+        print('Please put chromedriver in the same folder as fandango_scraper_calculator.py and try again')
+        return
+#    for i in chrome_binaries:
+#        if (os.path.isfile(i)):
+#            chrome_binary=i
+#            break;
+#    while (not os.path.isfile(chrome_binary)):
+#        chrome_binary = input('Please type the location of Google Chrome or Chromium binary.\n Example is: /Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary')
+#    
     #Start the Selenium server with the headless chrome driver
     service = serv.Service(chrome_driver)
     service.start()
