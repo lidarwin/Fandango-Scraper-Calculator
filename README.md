@@ -3,7 +3,7 @@ Ever wanted to monitor the trends in ticket prices in US movie theaters on Fanda
 
 Everything is written in Python, and for the scraping that can be done without a browser (because nervoussummer.com eventually blocks non-browser HTML requests), python requests and beautifulsoup4 are used. For the headless browser scraping, ChromeDriver and Selenium are used.
 
-This is also a script that takes in a number in US Dollars and returns the Movie Ticket(s) that should be purchased from Fandango.com to achieve the sum. Use case is to maximize spend of Fandango Credits without going over and having to use a credit card. This is basically a special case of the unbounded knapsack problem, also called the Subset Sum problem https://en.wikipedia.org/wiki/Subset_sum_problem
+This is also a script that takes in a number in US Dollars and returns the Movie Ticket(s) that should be purchased from Fandango.com to achieve the sum. The calculations are done on the fly during each webpage scrape to reduce overall time. The use case is to maximize spend of Fandango Credits without going over and having to use a credit card. This calculation looks similar to the Subset Sum problem https://en.wikipedia.org/wiki/Subset_sum_problem which is NP complete, but is not the same because we allow for repititions. So, this is basically a special case of the unbounded knapsack problem, where the weights are equal to the values. The solution used here for the unbounded knapsack problem runs is polynomial (pseudo polynomial) thanks to dynamic programming. 
 
 Requirements (Everything is available on Anaconda except ChromeDriver, which is available from Google)
 requests 2.18.4
