@@ -167,6 +167,9 @@ def main():
     #Maps float dollar ammount to a list of theater links. The information of the movie itself and the type (Adult, Child, Senior) is lost
     ticketPrices = {}
     
+    #The best array of ticket prices to buy so far
+    fandangoCalculated=[]
+    
     #We don't want to have to run the script to generate the theater links every time, so we check if the file exists
     if (not os.path.isfile('TheaterLinks.txt')):
         #The starting URL. It has Fandango's list of states which are links to the theaters in the states
@@ -285,7 +288,12 @@ def main():
                                     print(ticketPrices[tic] + '\n')
                                 return ticketPrices
             except KeyboardInterrupt:
-                return
+                print('Aborted, but this is the best result')
+                for tic in fandangoCalculated:
+                    sTic = str(tic)
+                    print('Buy ' + str(fandangoCalculated.count(tic)) + ' times ' + 'at price: $' + sTic[0:len(sTic)-2] + '.' + sTic[len(sTic)-2:] + ' from the link below:')
+                    print(ticketPrices[tic] + '\n')
+                return ticketPrices
             except:
                 continue
             
